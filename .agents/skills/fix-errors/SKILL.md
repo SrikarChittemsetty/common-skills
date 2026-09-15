@@ -39,9 +39,7 @@ cargo fmt -- --check
 
 **Clippy (full workspace):**
 ```bash
-cargo clippy --workspace --exclude warp_completer --all-targets --tests -- -D warnings
-cargo clippy -p warp --all-targets --tests -- -D warnings
-cargo clippy -p warp_completer --all-targets --tests -- -D warnings
+cargo clippy --workspace --all-targets --tests -- -D warnings
 ```
 
 **WASM Clippy:**
