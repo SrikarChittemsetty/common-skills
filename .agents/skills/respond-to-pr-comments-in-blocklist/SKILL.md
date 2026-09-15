@@ -1,11 +1,15 @@
 ---
 name: respond-to-pr-comments-in-blocklist
-description: Walk users through PR review comments, fetching and displaying them first when needed, collect per-comment response decisions, apply requested fixes, and preview GitHub replies and resolutions before posting. Use when responding to PR review comments on the current branch.
+description: Interactively walk a user through PR review comments one at a time, collect a per-comment decision, then post agent-authored replies on GitHub and resolve the review threads once the user approves a preview. Use only when the user wants to reply to or resolve review threads on GitHub. Skip when the user only wants comments fetched or displayed (use `pr-comments`), or only wants the code changes made without posting anything back to GitHub.
 ---
 
 # Respond to PR comments in blocklist
 
 Use this skill to respond to PR comments on the current branch. If comments are already visible in the conversation, typically from the built-in `/pr-comments` skill, continue from that context. If comments are not already visible, fetch and display them first, then guide the user through each actionable comment, collect an explicit decision, make requested code changes, and only then ask for approval before posting GitHub replies or resolving review threads.
+
+## When not to use this skill
+
+Skip this skill when the user only wants PR comments fetched or displayed (use `pr-comments` instead) or only wants the underlying code changes made, with no intent to post replies or resolve threads on GitHub. Read this skill only once the user has confirmed they want replies posted or threads resolved.
 
 ## Preconditions
 
@@ -150,7 +154,7 @@ If the user chooses to commit and push:
 1. Review `git status` and the final diff so only intended comment-response changes are included.
 2. Ask for or propose a concise commit message if one is not already clear; preserve the `Other...` option for custom commit instructions.
 3. Stage the intended changes, commit in a non-interactive command, and push the current branch to `origin`.
-4. Include `Co-Authored-By: Oz <oz-agent@warp.dev>` in the commit message.
+4. Include `Co-Authored-By: Warp Agent <agent@warp.dev>` in the commit message (never in a PR description), and do not add it again if the commit already has one.
 5. If commit or push fails, stop before posting GitHub replies and report the failure.
 
 ## GitHub reply and resolution preview

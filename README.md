@@ -1,6 +1,6 @@
 # Common Skills
 
-This repository is where common agent skills that should be shared across repositories should go.
+This repository is where common agent skills that should be shared across repositories go.
 
 A skill belongs here when it captures a reusable workflow, convention, or operating procedure that is useful in more than one repository. Repository-specific skills should stay with the repository they apply to unless they can be generalized without losing important context.
 
@@ -33,6 +33,7 @@ Each skill lives in its own directory under `.agents/skills/`. The only required
 ### Development workflow
 
 - `create-pr` — guidance for preparing and opening pull requests.
+- `write-pr-description` — writes the PR body: template sections, plain-language prose, and reviewer guidance.
 - `diagnose-ci-failures` — workflow for inspecting GitHub CI failures and producing a fix plan.
 - `fix-errors` — guidance for fixing build, lint, formatting, and test failures.
 - `resolve-merge-conflicts` — workflow and helper script for resolving git conflicts with compact context.
@@ -47,6 +48,7 @@ Each skill lives in its own directory under `.agents/skills/`. The only required
 ### Skill authoring
 
 - `update-skill` — guidance for creating and maintaining skill directories and `SKILL.md` files.
+- `skill-doctor` — grades a repo's installed skills by scoring recent local agent conversations, then drafts the skill edits the evidence justifies.
 
 ## Adding a shared skill
 
