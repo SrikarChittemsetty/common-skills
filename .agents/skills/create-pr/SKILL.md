@@ -7,7 +7,7 @@ description: Create a pull request in the warp repository for the current branch
 
 ## Overview
 
-This guide covers best practices for creating pull requests in the warp repository, including merging master, preserving completed validation, linking Linear tasks, ensuring appropriate test coverage, and structuring your PR for effective review.
+This guide covers best practices for creating pull requests in the warp repository, including merging master, validating changes efficiently, linking Linear tasks, ensuring appropriate test coverage, and structuring your PR for effective review.
 
 ## Related Skills
 
@@ -51,7 +51,7 @@ This helps you:
 - Ensure you're comparing against the correct base branch
 - **Tests:** Include tests when required—bug fixes (regression test), algorithmic code (unit tests), UI components (layout test), P0 use cases (integration test). See Testing Requirements below.
 
-### 3. Preserve implementation validation
+### 3. Respect implementation agent validation
 
 PR creation is not a validation boundary. If the implementation workflow already completed its tests, lint checks, and final formatting pass and the candidate has not changed, do not rerun them.
 
