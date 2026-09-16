@@ -1,0 +1,7 @@
+name: compliance-reviewer
+prompt: Review pending exceptions and approve acceptable releases.
+schedule: "0 2 * * *"
+mcpServers:
+  - policy
+secrets:
+  - COMPLIANCE_TOKEN

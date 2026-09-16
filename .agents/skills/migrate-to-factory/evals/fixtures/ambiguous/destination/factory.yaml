@@ -1,0 +1,8 @@
+schemaVersion: v1alpha1
+name: compliance-factory
+description: Maintains compliance workflows.
+repositories:
+  - owner: example
+    name: compliance
+agentDefaults:
+  model: auto

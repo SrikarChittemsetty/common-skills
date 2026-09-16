@@ -1,0 +1,8 @@
+schemaVersion: v1alpha1
+name: release-factory
+description: Maintains product releases.
+repositories:
+  - owner: example
+    name: product
+agentDefaults:
+  model: auto
