@@ -40,6 +40,10 @@ Each skill lives in its own directory under `.agents/skills/`. The only required
 - `review-pr` — produces structured PR review feedback from local diff artifacts.
 - `check-impl-against-spec` — compares PR implementation changes against provided spec context during review.
 
+### Factory workflow
+
+- `migrate-to-factory` — translates existing file-defined agent workflows, skills, and scripts into an existing Warp Factory configuration repository.
+
 ### Investigation and decision-making
 
 - `research` — delegates low signal-to-noise-ratio research work to subagents and returns distilled, evidence-backed findings.
