@@ -79,7 +79,11 @@ Read [references/mapping-examples.md](references/mapping-examples.md) when choos
 
 After confirmation, use `factory-files` to fetch the destination's declared schema and make the smallest compatible edits. Preserve unrelated fields and prompt bodies.
 
-Copy only the source material selected in the plan. Adapt references so all authored resources resolve inside the destination Factory root or its configured repositories. Do not modify, normalize, or commit anything in a source repository.
+Copy only the source material selected in the plan. Keep every migrated artifact and its relative file references inside the destination Factory root.
+
+Treat a configured repository as an explicit external runtime dependency, never as the location of a migrated artifact, bundled helper, or writable path. Do not retain a dependency on a supplied migration source. If preserving behavior genuinely requires one, stop for a user decision and record the proposed dependency as read-only before continuing.
+
+Do not modify, normalize, or commit anything in a source repository.
 
 ### 6. Validate the Factory tree
 

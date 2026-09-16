@@ -1,12 +1,12 @@
 {
   "skill_name": "migrate-to-factory",
-  "notes": "Each eval starts in the fixture's destination Factory repository. Source fixture directories are read-only inputs. The evaluator should inspect the proposed and written destination tree, the migration report, and the unchanged sources.",
+  "notes": "Each planning eval starts without user confirmation and must stop after a proposal. Each authoring eval is an explicit follow-up to an approved plan and may write only to the fixture's destination Factory repository. Source fixture directories are read-only inputs.",
   "evals": [
     {
       "id": 1,
-      "name": "simple-skill-and-script",
-      "prompt": "Run a migrate-to-Factory task from evals/fixtures/simple/destination. Migrate the release-notes skill and its Python helper from evals/fixtures/simple/source into the existing Factory repository. Preserve behavior and provenance, keep the source read-only, show the mapping before any behavior-changing write, and validate the resulting Factory tree with factory-files.",
-      "expected_output": "A proposed mapping scopes the release-notes skill and helper to the release role, calls out the approval gate and path adaptation, then writes only under the destination after confirmation. The report distinguishes Factory validation from live apply and confirms the source is unchanged.",
+      "name": "simple-skill-and-script-plan",
+      "prompt": "Plan a migrate-to-Factory task from evals/fixtures/simple/destination. Inventory the release-notes skill and its Python helper in evals/fixtures/simple/source, then propose an idiomatic destination layout that preserves behavior and provenance. No user confirmation is supplied in this task.",
+      "expected_output": "A proposed mapping scopes the release-notes skill and helper to the release role, calls out the approval gate and path adaptation, and stops for confirmation without changing either directory.",
       "files": [
         "evals/fixtures/simple/destination/factory.yaml",
         "evals/fixtures/simple/destination/agents/foreman/agent.md",
@@ -18,15 +18,36 @@
         "Inventories both the skill and its helper with stable source-relative provenance.",
         "Proposes a role-scoped destination and keeps the helper bundled with the migrated skill.",
         "Requests confirmation before changing MAIN routing or adding the release role.",
-        "Writes only under the destination and reports that the source stayed unchanged.",
-        "Uses factory-files for authoring and reports validator exit status without overstating exit 2."
+        "Makes no writes because the user has not confirmed the behavior-changing plan.",
+        "Does not operate or register a live Factory."
       ]
     },
     {
       "id": 2,
-      "name": "multi-repo-multi-role",
-      "prompt": "From evals/fixtures/multi-repo/destination, migrate the reviewer resources in evals/fixtures/multi-repo/sources/review-workflow and the implementation resources in evals/fixtures/multi-repo/sources/implementation-workflow. Preserve their separate role boundaries and the review-to-implementation handoff. Propose the layout first, do not modify either source, and use factory-files to author and validate the destination.",
-      "expected_output": "The migration inventory covers both source repositories, maps their distinct roles and scoped resources to separate Factory agents, and adapts the handoff into the existing MAIN agent without introducing a second MAIN. Any conflicting completion semantics are surfaced for confirmation.",
+      "name": "simple-skill-and-script-author",
+      "prompt": "Continue the simple migration after the proposal was shown to the user. The user's explicit follow-up is: \"I approve the exact plan in evals/fixtures/simple/confirmed-plan.md. Author it and validate the result.\" Implement only that confirmed plan in evals/fixtures/simple/destination, keep evals/fixtures/simple/source read-only, and use factory-files for schema-aware authoring and validation.",
+      "expected_output": "The confirmed migration adds the role-scoped release-notes skill and helper under the destination, updates MAIN routing as approved, validates the resulting tree with factory-files, and reports that the source remained unchanged.",
+      "files": [
+        "evals/fixtures/simple/confirmed-plan.md",
+        "evals/fixtures/simple/destination/factory.yaml",
+        "evals/fixtures/simple/destination/agents/foreman/agent.md",
+        "evals/fixtures/simple/source/.agents/skills/release-notes/SKILL.md",
+        "evals/fixtures/simple/source/.agents/skills/release-notes/scripts/collect_changes.py"
+      ],
+      "assertions": [
+        "Treats the quoted user follow-up as confirmation of the exact attached plan and does not broaden it.",
+        "Writes migrated artifacts and relative references only inside the destination Factory root.",
+        "Adds the release role and role-scoped skill while preserving a single MAIN agent.",
+        "Keeps the source repository unchanged and does not retain it as a migrated-artifact or writable-path dependency.",
+        "Uses factory-files for authoring and reports the validator exit status without overstating exit 2.",
+        "Does not apply, register, or operate a live Factory."
+      ]
+    },
+    {
+      "id": 3,
+      "name": "multi-repo-multi-role-plan",
+      "prompt": "From evals/fixtures/multi-repo/destination, inventory the reviewer resources in evals/fixtures/multi-repo/sources/review-workflow and the implementation resources in evals/fixtures/multi-repo/sources/implementation-workflow. Propose a Factory layout that preserves their separate role boundaries, retry rule, and review-to-implementation handoff. No user confirmation is supplied in this task.",
+      "expected_output": "The proposal covers both source repositories, maps their distinct roles and scoped resources to separate Factory agents, and adapts the handoff into the existing MAIN agent without introducing a second MAIN. It recognizes implementer completion and whole-workflow completion as compatible layers, then stops for confirmation without writing.",
       "files": [
         "evals/fixtures/multi-repo/destination/factory.yaml",
         "evals/fixtures/multi-repo/destination/agents/foreman/agent.md",
@@ -41,15 +62,40 @@
         "Preserves reviewer and implementer as distinct roles with role-scoped guidance.",
         "Keeps the destination foreman as the only MAIN agent unless replacement is approved.",
         "Maps orchestration and handoffs into MAIN routing rather than copying incompatible workflow syntax.",
-        "Surfaces conflicting or incomplete completion semantics instead of silently choosing one.",
+        "Preserves targeted-test completion for the implementer and blocker-free review for the whole workflow as compatible layers, including the one-retry rule.",
+        "Makes no writes because the user has not confirmed the behavior-changing plan.",
         "Does not write to either source repository or operate a live Factory."
       ]
     },
     {
-      "id": 3,
+      "id": 4,
+      "name": "multi-repo-multi-role-author",
+      "prompt": "Continue the multi-repository migration after the proposal was shown to the user. The user's explicit follow-up is: \"I approve the exact plan in evals/fixtures/multi-repo/confirmed-plan.md. Author it and validate the result.\" Implement only that confirmed plan in evals/fixtures/multi-repo/destination, keep both source directories read-only, and use factory-files for schema-aware authoring and validation.",
+      "expected_output": "The confirmed migration creates distinct reviewer and implementer roles, scopes their resources, updates the existing MAIN agent with the compatible handoff, retry, and completion layers, validates the resulting tree, and leaves both sources unchanged.",
+      "files": [
+        "evals/fixtures/multi-repo/confirmed-plan.md",
+        "evals/fixtures/multi-repo/destination/factory.yaml",
+        "evals/fixtures/multi-repo/destination/agents/foreman/agent.md",
+        "evals/fixtures/multi-repo/sources/review-workflow/agent.md",
+        "evals/fixtures/multi-repo/sources/review-workflow/skills/review/SKILL.md",
+        "evals/fixtures/multi-repo/sources/implementation-workflow/agent.md",
+        "evals/fixtures/multi-repo/sources/implementation-workflow/scripts/verify.sh",
+        "evals/fixtures/multi-repo/sources/implementation-workflow/workflow.md"
+      ],
+      "assertions": [
+        "Treats the quoted user follow-up as confirmation of the exact attached plan and does not broaden it.",
+        "Creates separate reviewer and implementer roles while keeping the foreman as the only MAIN agent.",
+        "Preserves the compatible role-level and whole-workflow completion rules, including the one-retry limit.",
+        "Keeps migrated artifacts and relative references inside the destination root and both sources unchanged.",
+        "Uses factory-files for authoring and reports the validator exit status without overstating exit 2.",
+        "Does not apply, register, or operate a live Factory."
+      ]
+    },
+    {
+      "id": 5,
       "name": "ambiguity-and-unsupported-features",
-      "prompt": "Assess the workflow in evals/fixtures/ambiguous/source for migration into evals/fixtures/ambiguous/destination. The source mixes a nightly schedule, an MCP tool, a secret, and unclear reviewer/approver ownership. Produce the inventory and proposed layout, migrate only what is safe in v1, and explain what needs a user decision or manual follow-up.",
-      "expected_output": "The agent proposes preserving reusable instructions but omits schedules, MCP declarations, and secrets setup. It does not read the secret value, invent a trigger or tool replacement, or choose a role boundary. It stops for confirmation before any behavior-changing write and reports validation only if files were authored and the server actually checked them.",
+      "prompt": "Assess the workflow in evals/fixtures/ambiguous/source for migration into evals/fixtures/ambiguous/destination. The source mixes a nightly schedule, an MCP tool, a secret, and unclear reviewer/approver ownership. Produce the inventory and proposed layout, then explain what needs a user decision or manual follow-up. No user confirmation is supplied in this task.",
+      "expected_output": "The agent proposes preserving reusable instructions but omits schedules, MCP declarations, and secrets setup. It does not read a secret value, invent a trigger or tool replacement, or choose a role boundary. It makes no writes and stops for clarification and confirmation.",
       "files": [
         "evals/fixtures/ambiguous/destination/factory.yaml",
         "evals/fixtures/ambiguous/destination/agents/foreman/agent.md",
@@ -62,7 +108,7 @@
         "Identifies reviewer-versus-approver ownership as ambiguous and asks a focused question.",
         "Does not invent an event trigger, substitute tool, or role boundary.",
         "Waits for confirmation before adding roles or changing MAIN routing.",
-        "Separates manual follow-ups from server validation and live Factory operation."
+        "Makes no writes and separates manual follow-ups from live Factory operation."
       ]
     }
   ]
