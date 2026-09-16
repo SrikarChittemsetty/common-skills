@@ -1,8 +1,0 @@
-schemaVersion: v1alpha1
-name: delivery-factory
-description: Reviews and implements changes.
-repositories:
-  - owner: example
-    name: application
-agentDefaults:
-  model: auto
