@@ -481,6 +481,83 @@ class ZcodeSessionTests(unittest.TestCase):
             self.assertIsNone(parse_zcode_session(path, set(), False))
 
 
+class CodexSessionTests(unittest.TestCase):
+    def _message(self, role, text, **extra):
+        return {
+            "type": "response_item",
+            "payload": {
+                "type": "message",
+                "role": role,
+                "content": [{"type": "input_text" if role == "user" else "output_text", "text": text}],
+                **extra,
+            },
+        }
+
+    def test_counts_turns_from_response_items_without_legacy_events(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "codex.jsonl"
+            write_jsonl(path, [
+                {"type": "session_meta", "payload": {"id": "codex-session", "cwd": "/tmp/repo"}},
+                self._message("user", "Inspect a sample file."),
+                {
+                    "type": "response_item",
+                    "payload": {
+                        "type": "custom_tool_call",
+                        "name": "functions.exec",
+                        "call_id": "call-1",
+                        "input": "print('synthetic')",
+                    },
+                },
+                {
+                    "type": "response_item",
+                    "payload": {"type": "custom_tool_call_output", "call_id": "call-1", "output": "synthetic"},
+                },
+                self._message("assistant", "Inspection complete.", channel="final"),
+            ])
+
+            _, stats, entries, _ = parse_codex_session(path, set(), False)
+
+            self.assertEqual(stats["user_turns"], 1)
+            self.assertEqual(stats["assistant_turns"], 1)
+            self.assertEqual(stats["tool_calls"], 1)
+            self.assertIn(("user", "Inspect a sample file."), entries)
+            self.assertIn(("assistant", "Inspection complete."), entries)
+
+    def test_does_not_double_count_when_both_record_kinds_are_present(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "codex.jsonl"
+            write_jsonl(path, [
+                {"type": "session_meta", "payload": {"id": "codex-session", "cwd": "/tmp/repo"}},
+                {"type": "event_msg", "payload": {"type": "user_message", "message": "Hi"}},
+                self._message("user", "Hi"),
+                {"type": "event_msg", "payload": {"type": "agent_message", "message": "Hello"}},
+                self._message("assistant", "Hello", channel="final"),
+                {"type": "event_msg", "payload": {"type": "agent_message", "message": "Done"}},
+                self._message("assistant", "Done", channel="final"),
+            ])
+
+            _, stats, _, _ = parse_codex_session(path, set(), False)
+
+            self.assertEqual(stats["user_turns"], 1)
+            self.assertEqual(stats["assistant_turns"], 2)
+
+    def test_commentary_items_do_not_count_as_assistant_turns(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "codex.jsonl"
+            write_jsonl(path, [
+                {"type": "session_meta", "payload": {"id": "codex-session", "cwd": "/tmp/repo"}},
+                self._message("user", "Fix the bug."),
+                self._message("assistant", "Looking at the file now.", channel="commentary"),
+                self._message("assistant", "Fixed.", channel="final"),
+            ])
+
+            _, stats, entries, _ = parse_codex_session(path, set(), False)
+
+            self.assertEqual(stats["assistant_turns"], 1)
+            self.assertIn(("assistant", "Looking at the file now."), entries)
+            self.assertIn(("assistant", "Fixed."), entries)
+
+
 class StreamingSessionReadTests(unittest.TestCase):
     def test_claude_and_codex_parse_records_after_previous_file_limit(self):
         with tempfile.TemporaryDirectory() as tmp:
