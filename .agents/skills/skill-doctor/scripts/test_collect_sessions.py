@@ -3,6 +3,8 @@
 
 import json
 import os
+import subprocess
+import sys
 import tempfile
 import unittest
 from datetime import datetime, timedelta, timezone
@@ -23,6 +25,7 @@ from collect_sessions import (
 )
 
 PREVIOUS_FILE_LIMIT = 8 * 1024 * 1024
+COLLECTOR = Path(__file__).resolve().with_name("collect_sessions.py")
 
 
 def write_jsonl(path, records):
@@ -556,6 +559,77 @@ class CodexSessionTests(unittest.TestCase):
             self.assertEqual(stats["assistant_turns"], 1)
             self.assertIn(("assistant", "Looking at the file now."), entries)
             self.assertIn(("assistant", "Fixed."), entries)
+
+
+class CodexCollectorEndToEndTests(unittest.TestCase):
+    def test_response_item_only_rollout_is_considered_and_sampled(self):
+        # Regression for #98: the parser counted zero turns for a rollout whose
+        # visible messages are only response_item records, so the collector
+        # dropped it before sampling and reported 0 considered / 0 sampled.
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            project = root / "project"
+            project.mkdir()
+            codex_home = root / "codex-home"
+            out_dir = root / "report"
+            now = datetime.now(timezone.utc).isoformat()
+
+            def item(payload):
+                return {"timestamp": now, "type": "response_item", "payload": payload}
+
+            write_jsonl(codex_home / "sessions" / "rollout-synthetic.jsonl", [
+                {
+                    "timestamp": now,
+                    "type": "session_meta",
+                    "payload": {
+                        "id": "synthetic-session",
+                        "cwd": str(project),
+                        "timestamp": now,
+                        "originator": "codex",
+                    },
+                },
+                item({
+                    "type": "message",
+                    "role": "user",
+                    "content": [{"type": "input_text", "text": "Inspect a sample file."}],
+                }),
+                item({
+                    "type": "custom_tool_call",
+                    "name": "functions.exec",
+                    "call_id": "synthetic-call",
+                    "input": "print('synthetic')",
+                }),
+                item({
+                    "type": "custom_tool_call_output",
+                    "call_id": "synthetic-call",
+                    "output": "synthetic",
+                }),
+                item({
+                    "type": "message",
+                    "role": "assistant",
+                    "channel": "final",
+                    "content": [{"type": "output_text", "text": "Inspection complete."}],
+                }),
+            ])
+
+            run = subprocess.run(
+                [
+                    sys.executable, str(COLLECTOR),
+                    "--harness", "codex",
+                    "--codex-home", str(codex_home),
+                    "--repo", str(project),
+                    "--out", str(out_dir),
+                ],
+                capture_output=True,
+                text=True,
+            )
+
+            self.assertEqual(run.returncode, 0, run.stderr)
+            inventory = json.loads((out_dir / "inventory.json").read_text())
+            self.assertEqual(inventory["stats"]["sessions_in_scope"], 1)
+            self.assertEqual(inventory["stats"]["sessions_considered"], 1)
+            self.assertEqual(inventory["stats"]["sessions_sampled"], 1)
+            self.assertEqual(len(list((out_dir / "transcripts").iterdir())), 1)
 
 
 class StreamingSessionReadTests(unittest.TestCase):
